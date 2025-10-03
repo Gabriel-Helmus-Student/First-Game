@@ -129,18 +129,39 @@ public class ThirdPersonPlayerController : MonoBehaviour
         return false;
     }
 
+    // Checks if there's enough space to stand up
+    bool CanStandUp()
+    {
+        // The center of the capsule check, positioned where the character's head would be when standing
+        Vector3 checkCenter = transform.position + Vector3.up * (standingHeight - controller.radius);
+
+        // The radius of the capsule check
+        float checkRadius = controller.radius;
+
+        // The half-height of the capsule check
+        float checkHalfHeight = standingHeight / 2f - controller.radius;
+
+        // Perform the capsule check, ignoring the player's own layer
+        // The '~' inverts the bitmask, so it checks all layers EXCEPT the player's
+        return !Physics.CheckCapsule(transform.position + Vector3.up * checkRadius, checkCenter, checkRadius, ~LayerMask.GetMask("Player"));
+    }
+
     // Handle crouch behavior
     void HandleCrouch()
     {
         if (Input.GetKeyDown(crouchKey))
         {
+            // Crouch down
             controller.height = crouchHeight;
-            controller.center = new Vector3(0, crouchHeight / 2, 0);
+            // You don't need to change the center if your pivot is at the base
         }
         else if (Input.GetKeyUp(crouchKey))
         {
-            controller.height = standingHeight;
-            controller.center = new Vector3(0, standingHeight / 2, 0);
+            // Check for obstacles before standing up
+            if (CanStandUp())
+            {
+                controller.height = standingHeight;
+            }
         }
     }
-}
+    }
