@@ -48,12 +48,12 @@ namespace LP.TurnBaesedCombat
         }
 
         //attack button function//
-        public void AttackButton()
+        public void AttackBtn()
         {
             Attack(Enemy, 10);
         }
         //heal button function//
-        public void HealButton()
+        public void HealBtn()
         {
             Heal(Player, 10);
         }
@@ -62,6 +62,35 @@ namespace LP.TurnBaesedCombat
         private void ChangeTurn()
         {
            isPlayerTurn = !isPlayerTurn;
+
+            if (!isPlayerTurn)
+            {
+                AttackButton.interactable = false;
+                HealButton.interactable = false;
+            }
+            else
+            {
+                AttackButton.interactable = true;
+                HealButton.interactable = true;
+            }
+        }
+
+
+        private IEnumerator EnemyTurn()
+        {
+            yield return new WaitForSeconds(3);
+
+            int random = 0;
+            random = Random.Range(1, 3);
+
+            if (random == 1)
+            {
+                Attack(Player, 12);
+            }
+            else
+            {
+                Heal(Enemy, 3);
+            }
         }
     }
 
