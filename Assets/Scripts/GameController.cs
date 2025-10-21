@@ -1,99 +1,103 @@
 using System.Collections;
-using System.ComponentModel;
 using UnityEngine;
 using UnityEngine.UI;
 
-//Combat system//
-namespace LP.TurnBaesedCombat
+namespace LP.TurnBasedCombat
 {
-//define variables//
     public class GameController : MonoBehaviour
     {
-        [SerializeField] private GameObject Player = null;
-        [SerializeField] private GameObject Enemy = null;
-        [SerializeField] private Slider PlayerHealthBar = null;
-        [SerializeField] private Slider EnemyHealthBar = null;
-        [SerializeField] private Button AttackButton = null;
-        [SerializeField] private Button HealButton = null;
+        [Header("Scene References")]
+        [SerializeField] private Slider PlayerHealthBar;
+        [SerializeField] private Slider EnemyHealthBar;
+        [SerializeField] private Button AttackButton;
+        [SerializeField] private Button HealButton;
 
+        private Unit playerUnit;
+        private Unit enemyUnit;
         private bool isPlayerTurn = true;
 
-        //attack function//
-        private void Attack(GameObject target, float damage)
+        private void Start()
         {
-            if (target == Enemy)
-            {
-                EnemyHealthBar.value -= damage;
-            }
-            else
-            {
-                PlayerHealthBar.value -= damage;
-            }
+            // Initialize both combatants
+            playerUnit = new Unit("Player", 100, 15, 10);
+            enemyUnit = new Unit("Enemy", 80, 12, 5);
 
-            ChangeTurn();
-        }
-        //heal function//
-        private void Heal(GameObject target, float amount)
-        {
-            if (target == Enemy)
-            {
-                EnemyHealthBar.value += amount;
-            }
-            else
-            {
-                PlayerHealthBar.value += amount;
-            }
+            PlayerHealthBar.maxValue = playerUnit.MaxHp;
+            EnemyHealthBar.maxValue = enemyUnit.MaxHp;
+            PlayerHealthBar.value = playerUnit.CurrentHp;
+            EnemyHealthBar.value = enemyUnit.CurrentHp;
 
-            ChangeTurn();
+            AttackButton.onClick.AddListener(AttackBtn);
+            HealButton.onClick.AddListener(HealBtn);
         }
 
-        //attack button function//
         public void AttackBtn()
         {
-            Attack(Enemy, 10);
+            if (!isPlayerTurn) return;
+
+            int damage = playerUnit.Attack(enemyUnit);
+            EnemyHealthBar.value = enemyUnit.CurrentHp;
+
+            if (enemyUnit.CurrentHp <= 0)
+            {
+                Debug.Log("Enemy defeated!");
+                return;
+            }
+
+            ChangeTurn();
+            StartCoroutine(EnemyTurn());
         }
-        //heal button function//
+
         public void HealBtn()
         {
-            Heal(Player, 10);
+            if (!isPlayerTurn) return;
+
+            int healed = playerUnit.Heal();
+            PlayerHealthBar.value = playerUnit.CurrentHp;
+
+            ChangeTurn();
+            StartCoroutine(EnemyTurn());
         }
 
-        //turn change function//
         private void ChangeTurn()
         {
-           isPlayerTurn = !isPlayerTurn;
-
-            if (!isPlayerTurn)
-            {
-                AttackButton.interactable = false;
-                HealButton.interactable = false;
-            }
-            else
-            {
-                AttackButton.interactable = true;
-                HealButton.interactable = true;
-            }
+            isPlayerTurn = !isPlayerTurn;
+            AttackButton.interactable = isPlayerTurn;
+            HealButton.interactable = isPlayerTurn;
         }
-
 
         private IEnumerator EnemyTurn()
         {
-            yield return new WaitForSeconds(3);
+            yield return new WaitForSeconds(2f);
 
-            int random = 0;
-            random = Random.Range(1, 3);
+            int randomChoice = Random.Range(1, 3);
 
-            if (random == 1)
+            if (randomChoice == 1)
             {
-                Attack(Player, 12);
+                int damage = enemyUnit.Attack(playerUnit);
+                PlayerHealthBar.value = playerUnit.CurrentHp;
+
+                if (playerUnit.CurrentHp <= 0)
+                {
+                    Debug.Log("Player defeated!");
+                    yield break;
+                }
             }
             else
             {
-                Heal(Enemy, 3);
+                int healed = enemyUnit.Heal();
+                EnemyHealthBar.value = enemyUnit.CurrentHp;
             }
+
+            ChangeTurn();
+        }
+        private void CheckForDefeat()
+        {
+            if (playerUnit.CurrentHp <= 0)
+                Debug.Log("Game Over!");
+
+            if (enemyUnit.CurrentHp <= 0)
+                Debug.Log("You Win!");
         }
     }
-
 }
-
-
